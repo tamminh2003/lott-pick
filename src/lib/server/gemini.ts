@@ -1,9 +1,9 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { GEMINI_API_KEY } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import type { LottoResult } from '$lib/models/LottoResult';
 import type { NextDrawProbability } from '$lib/models/NextDrawProbability';
 
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
 
 export async function getTopPredictions(history: LottoResult[]): Promise<NextDrawProbability[]> {
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
