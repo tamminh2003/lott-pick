@@ -3,6 +3,7 @@ import type { LottoResult } from '$lib/models/LottoResult';
 import type { NextDrawProbability } from '$lib/models/NextDrawProbability';
 import tattslottoIcon from '$lib/assets/tattslotto_icon.webp';
 import ozlottoIcon from '$lib/assets/ozlotto_icon.avif';
+import powerballIcon from '$lib/assets/powerball_icon.avif';
 
 export interface LottoConfig {
     name: string;
@@ -32,6 +33,15 @@ export const LOTTO_TYPES: LottoConfig[] = [
         secondaryColor: '#15803d', // Green
         predictionCount: 9,
         icon: ozlottoIcon
+    },
+    {
+        name: 'Powerball',
+        product: 'Powerball',
+        company: 'Tattersalls',
+        primaryColor: '#2563eb', // Blue
+        secondaryColor: '#1e3a8a', // Dark Blue
+        predictionCount: 8,
+        icon: powerballIcon
     }
 ];
 
