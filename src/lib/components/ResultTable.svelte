@@ -12,7 +12,6 @@
   let data = $derived($lottoResults || []);
   let isCollapsed = $state(true);
 
-
   function formatDate(date: Date): string {
     if (!(date instanceof Date) || isNaN(date.getTime())) return "Invalid Date";
     return date
@@ -25,18 +24,20 @@
   }
 </script>
 
-<div class="flex items-center justify-between mb-4">
-  <div class="flex items-center gap-4">
-    <h2 class="text-lg font-bold text-gray-800">
+<div
+  class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4"
+>
+  <div class="flex flex-wrap items-center gap-2 sm:gap-4">
+    <h2 class="text-base sm:text-lg font-bold text-gray-800">
       Historical Results ({$selectedLotto?.name})
     </h2>
     <span
-      class="text-sm text-gray-500 font-medium bg-gray-100 px-2 py-0.5 rounded-full"
+      class="text-xs sm:text-sm text-gray-500 font-medium bg-gray-100 px-2 py-0.5 rounded-full"
       >{data.length} Draws</span
     >
     <button
       onclick={() => (isCollapsed = !isCollapsed)}
-      class="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+      class="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
     >
       <svg
         class="w-4 h-4 transition-transform duration-200"
@@ -59,7 +60,7 @@
   <button
     onclick={loadLottoResults}
     disabled={$isScraping}
-    class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-all border border-red-100 shadow-sm"
+    class="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-all border border-red-100 shadow-sm"
   >
     <svg
       class="w-4 h-4"
@@ -75,7 +76,7 @@
         d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
       />
     </svg>
-    {$isScraping ? "Scraping..." : "Refresh Results"}
+    <span>{$isScraping ? "Scraping..." : "Refresh Results"}</span>
   </button>
 </div>
 
@@ -83,12 +84,12 @@
   <div class="transition-all duration-300 ease-in-out">
     {#if $isScraping && data.length === 0}
       <div
-        class="flex flex-col items-center justify-center p-12 space-y-4 bg-white border border-gray-200 rounded-sm"
+        class="flex flex-col items-center justify-center p-8 sm:p-12 space-y-4 bg-white border border-gray-200 rounded-sm"
       >
         <div
-          class="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500"
+          class="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-red-500"
         ></div>
-        <p class="text-gray-600 font-medium">
+        <p class="text-gray-600 font-medium text-sm sm:text-base text-center">
           Scraping latest lottery results...
         </p>
       </div>
@@ -111,38 +112,40 @@
       class="w-full overflow-x-auto bg-white shadow-sm border border-gray-200 rounded-sm"
       class:opacity-50={$isScraping}
     >
-      <table class="w-full text-left border-collapse min-w-200">
+      <table class="w-full text-left border-collapse min-w-[600px]">
         <thead>
           <tr class="bg-gray-50 border-b border-gray-200">
             <th
-              class="px-6 py-4 font-semibold text-gray-600 text-sm uppercase tracking-wider"
-              >Draw Number</th
+              class="px-4 sm:px-6 py-3 sm:py-4 font-semibold text-gray-600 text-xs sm:text-sm uppercase tracking-wider whitespace-nowrap"
+              >Draw #</th
             >
             <th
-              class="px-6 py-4 font-semibold text-gray-600 text-sm uppercase tracking-wider"
-              >Draw Date</th
+              class="px-4 sm:px-6 py-3 sm:py-4 font-semibold text-gray-600 text-xs sm:text-sm uppercase tracking-wider whitespace-nowrap"
+              >Date</th
             >
             <th
-              class="px-6 py-4 font-semibold text-gray-600 text-sm uppercase tracking-wider"
-              >Primary Numbers</th
+              class="px-4 sm:px-6 py-3 sm:py-4 font-semibold text-gray-600 text-xs sm:text-sm uppercase tracking-wider"
+              >Primary</th
             >
             <th
-              class="px-6 py-4 font-semibold text-gray-600 text-sm uppercase tracking-wider"
-              >Secondary Numbers</th
+              class="px-4 sm:px-6 py-3 sm:py-4 font-semibold text-gray-600 text-xs sm:text-sm uppercase tracking-wider"
+              >Secondary</th
             >
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
           {#each data as row}
             <tr class="hover:bg-gray-50 transition-colors">
-              <td class="px-6 py-5 text-sm text-gray-800 font-medium"
+              <td
+                class="px-4 sm:px-6 py-4 sm:py-5 text-sm text-gray-800 font-medium whitespace-nowrap"
                 >{row.DrawNumber}</td
               >
-              <td class="px-6 py-5 text-sm text-gray-700"
+              <td
+                class="px-4 sm:px-6 py-4 sm:py-5 text-sm text-gray-700 whitespace-nowrap"
                 >{formatDate(row.DrawDate)}</td
               >
-              <td class="px-6 py-5">
-                <div class="flex flex-wrap gap-2">
+              <td class="px-4 sm:px-6 py-3 sm:py-5">
+                <div class="flex flex-wrap gap-1.5 sm:gap-2">
                   {#each row.Primaries as number}
                     <span
                       class="number-circle"
@@ -156,8 +159,8 @@
                   {/each}
                 </div>
               </td>
-              <td class="px-6 py-5">
-                <div class="flex flex-wrap gap-2">
+              <td class="px-4 sm:px-6 py-3 sm:py-5">
+                <div class="flex flex-wrap gap-1.5 sm:gap-2">
                   {#each row.Secondaries as number}
                     <span
                       class="number-circle"

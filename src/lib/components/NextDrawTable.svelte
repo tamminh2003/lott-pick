@@ -12,21 +12,22 @@
 
   let showMethodInfo = $state(false);
 
-
   function formatProbability(prob: number): string {
     return (prob * 100).toFixed(1) + "%";
   }
 </script>
 
-<div class="flex items-center justify-between mb-4 relative">
+<div
+  class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 relative"
+>
   <div class="flex flex-col">
-    <h2 class="text-lg font-bold text-gray-800">
+    <h2 class="text-base sm:text-lg font-bold text-gray-800">
       Next Draw Predictions ({$selectedLotto?.name})
     </h2>
     <div class="relative inline-block">
       <button
         onclick={() => (showMethodInfo = !showMethodInfo)}
-        class="text-xs text-blue-500 font-medium opacity-80 hover:opacity-100 flex items-center gap-1 cursor-help transition-opacity"
+        class="text-[10px] sm:text-xs text-blue-500 font-medium opacity-80 hover:opacity-100 flex items-center gap-1 cursor-help transition-opacity"
       >
         Method: {$isPredicting
           ? "Calculating..."
@@ -55,6 +56,7 @@
           <div class="flex justify-between items-start mb-2">
             <h4 class="font-bold text-gray-800">About Empirical Analysis</h4>
             <button
+              title="Close info"
               onclick={() => (showMethodInfo = false)}
               class="text-gray-400 hover:text-gray-600"
             >
@@ -92,7 +94,7 @@
   <button
     onclick={loadPredictions}
     disabled={$isPredicting}
-    class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-all border border-blue-100 shadow-sm"
+    class="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-all border border-blue-100 shadow-sm"
   >
     <svg
       class="w-4 h-4"
@@ -108,7 +110,7 @@
         d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
       />
     </svg>
-    {$isPredicting ? "Analyzing..." : "Refresh Prediction"}
+    <span>{$isPredicting ? "Analyzing..." : "Refresh Prediction"}</span>
   </button>
 </div>
 
@@ -121,7 +123,7 @@
       <div class="h-3 w-3 bg-blue-500 rounded-full"></div>
       <div class="h-3 w-3 bg-blue-500 rounded-full"></div>
     </div>
-    <p class="text-blue-600 text-sm font-medium">
+    <p class="text-blue-600 text-xs sm:text-sm font-medium">
       Gemini AI is analyzing empirical patterns...
     </p>
   </div>
@@ -144,15 +146,15 @@
   class="w-full overflow-x-auto bg-white shadow-sm border border-gray-200 rounded-sm"
   class:opacity-50={$isPredicting}
 >
-  <table class="w-full text-left border-collapse min-w-200">
+  <table class="w-full text-left border-collapse min-w-[300px]">
     <thead>
       <tr class="bg-gray-50 border-b border-gray-200">
         <th
-          class="px-6 py-4 font-semibold text-gray-600 text-sm uppercase tracking-wider"
+          class="px-4 sm:px-6 py-3 sm:py-4 font-semibold text-gray-600 text-xs sm:text-sm uppercase tracking-wider"
           >Number</th
         >
         <th
-          class="px-6 py-4 font-semibold text-gray-600 text-sm uppercase tracking-wider"
+          class="px-4 sm:px-6 py-3 sm:py-4 font-semibold text-gray-600 text-xs sm:text-sm uppercase tracking-wider"
           >Probability</th
         >
       </tr>
@@ -160,7 +162,9 @@
     <tbody class="divide-y divide-gray-100">
       {#each data as row}
         <tr class="hover:bg-gray-50 transition-colors">
-          <td class="px-6 py-5 text-sm text-gray-800 font-medium">
+          <td
+            class="px-4 sm:px-6 py-4 sm:py-5 text-sm text-gray-800 font-medium"
+          >
             <span
               class="number-circle"
               style="background-color: {$selectedLotto.primaryColor}; color: {$selectedLotto.primaryColor ===
@@ -171,7 +175,7 @@
               {row.Number}
             </span>
           </td>
-          <td class="px-6 py-5 text-sm text-gray-700"
+          <td class="px-4 sm:px-6 py-4 sm:py-5 text-sm text-gray-700"
             >{formatProbability(row.Probability)}</td
           >
         </tr>

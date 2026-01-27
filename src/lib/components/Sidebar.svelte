@@ -5,13 +5,32 @@
         changeLottoType,
     } from "$lib/stores/lottoStore";
 
+    let { isMobileOpen = $bindable(false) } = $props();
     let isCollapsed = $state(false);
 
     const toggleSidebar = () => (isCollapsed = !isCollapsed);
+    const closeMobile = () => (isMobileOpen = false);
+
+    function handleLottoChange(lotto: any) {
+        changeLottoType(lotto);
+        if (window.innerWidth < 768) {
+            closeMobile();
+        }
+    }
 </script>
 
+<!-- Backdrop for mobile -->
+{#if isMobileOpen}
+    <button
+        onclick={closeMobile}
+        class="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity"
+        aria-label="Close Sidebar"
+    ></button>
+{/if}
+
 <aside
-    class="fixed left-0 top-0 h-full bg-blue-900 text-white transition-all duration-300 z-50 flex flex-col shadow-2xl"
+    class="fixed left-0 top-0 h-full bg-blue-900 text-white transition-all duration-300 z-50 flex flex-col shadow-2xl
+    {isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}"
     class:w-64={!isCollapsed}
     class:w-16={isCollapsed}
 >
@@ -24,7 +43,8 @@
         {/if}
         <button
             onclick={toggleSidebar}
-            class="p-1 hover:bg-blue-800 rounded-md transition-colors"
+            class="hidden md:block p-1 hover:bg-blue-800 rounded-md transition-colors"
+            aria-label={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
         >
             <svg
                 class="w-6 h-6"
@@ -49,13 +69,33 @@
                 {/if}
             </svg>
         </button>
+        <!-- Mobile close button -->
+        <button
+            onclick={closeMobile}
+            class="md:hidden p-1 hover:bg-blue-800 rounded-md transition-colors"
+            aria-label="Close Sidebar"
+        >
+            <svg
+                class="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                />
+            </svg>
+        </button>
     </div>
 
     <!-- Lotto Types -->
     <nav class="flex-1 overflow-y-auto py-6 px-2 space-y-2">
         {#each LOTTO_TYPES as lotto}
             <button
-                onclick={() => changeLottoType(lotto)}
+                onclick={() => handleLottoChange(lotto)}
                 class="w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 group relative"
                 class:bg-blue-600={$selectedLotto.name === lotto.name}
                 class:hover:bg-blue-800={$selectedLotto.name !== lotto.name}
@@ -72,7 +112,7 @@
                 />
 
                 {#if !isCollapsed}
-                    <span class="font-medium">{lotto.name}</span>
+                    <span class="font-medium text-left">{lotto.name}</span>
                 {/if}
 
                 {#if isCollapsed}
