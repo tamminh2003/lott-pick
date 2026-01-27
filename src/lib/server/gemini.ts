@@ -2,11 +2,28 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { env } from '$env/dynamic/private';
 import type { LottoResult } from '$lib/models/LottoResult';
 import type { NextDrawProbability } from '$lib/models/NextDrawProbability';
+import { getCachedAnalysis, saveAnalysisResult, type AnalysisResult } from './blobs';
 
+const MODEL_NAME = 'gemini-2.5-flash';
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
 
-export async function getTopPredictions(history: LottoResult[], count: number = 7): Promise<NextDrawProbability[]> {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+export async function getTopPredictions(history: LottoResult[], product: string, count: number = 7): Promise<NextDrawProbability[]> {
+    // 1. Check if result is current (less than 24 hours old)
+    const cached = await getCachedAnalysis(product);
+    if (cached) {
+        const lastRun = new Date(cached.ResultDate);
+        const now = new Date();
+        const diffMs = now.getTime() - lastRun.getTime();
+        const diffHours = diffMs / (1000 * 60 * 60);
+
+        if (diffHours < 24) {
+            console.log(`[Gemini] Using cached results for ${product} (last updated: ${cached.ResultDate})`);
+            return cached.Result;
+        }
+        console.log(`[Gemini] Cache expired for ${product} (${diffHours.toFixed(1)}h old). Refreshing...`);
+    }
+
+    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
 
     // Prepare a concise summary of the history to keep token count down
     // For Powerball, we focus ONLY on the primary numbers (first 7)
@@ -37,7 +54,18 @@ export async function getTopPredictions(history: LottoResult[], count: number = 
 
     try {
         const predictions: NextDrawProbability[] = JSON.parse(jsonString);
-        return predictions.sort((a, b) => b.Probability - a.Probability).slice(0, count);
+        const sortedPredictions = predictions.sort((a, b) => b.Probability - a.Probability).slice(0, count);
+
+        // 2. Save result to Netlify Blob
+        const analysisResult: AnalysisResult = {
+            Model: MODEL_NAME,
+            Product: product,
+            Result: sortedPredictions,
+            ResultDate: new Date().toISOString()
+        };
+        await saveAnalysisResult(analysisResult);
+
+        return sortedPredictions;
     } catch (e) {
         console.error("Failed to parse Gemini response:", text);
         throw new Error("Invalid response from AI");

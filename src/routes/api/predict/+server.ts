@@ -21,7 +21,7 @@ export const GET: RequestHandler = async ({ url }) => {
         let method = 'AI';
 
         try {
-            predictions = await getTopPredictions(history, count);
+            predictions = await getTopPredictions(history, product, count);
         } catch (aiError) {
             console.warn('Gemini AI failed, falling back to frequency analysis:', aiError);
             predictions = calculateEmpiricalProbabilities(history, count);
