@@ -5,7 +5,7 @@ import type { NextDrawProbability } from '$lib/models/NextDrawProbability';
  * Calculates lottery number frequencies from historical data and returns the top 7.
  * Used as a fallback when AI prediction fails.
  */
-export function calculateEmpiricalProbabilities(history: LottoResult[]): NextDrawProbability[] {
+export function calculateEmpiricalProbabilities(history: LottoResult[], count: number = 7): NextDrawProbability[] {
     if (!history || history.length === 0) return [];
 
     const frequencyMap: Record<number, number> = {};
@@ -28,5 +28,5 @@ export function calculateEmpiricalProbabilities(history: LottoResult[]): NextDra
     // Sort by probability descending and take top 7
     return probabilities
         .sort((a, b) => b.Probability - a.Probability)
-        .slice(0, 7);
+        .slice(0, count);
 }

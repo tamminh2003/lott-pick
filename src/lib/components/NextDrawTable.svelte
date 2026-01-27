@@ -5,6 +5,7 @@
     isPredicting,
     predictError,
     loadPredictions,
+    selectedLotto,
   } from "$lib/stores/lottoStore";
 
   let data = $derived($predictions || []);
@@ -24,7 +25,9 @@
 
 <div class="flex items-center justify-between mb-4 relative">
   <div class="flex flex-col">
-    <h2 class="text-lg font-bold text-gray-800">Next Draw Predictions</h2>
+    <h2 class="text-lg font-bold text-gray-800">
+      Next Draw Predictions ({$selectedLotto?.name})
+    </h2>
     <div class="relative inline-block">
       <button
         onclick={() => (showMethodInfo = !showMethodInfo)}
@@ -163,7 +166,15 @@
       {#each data as row}
         <tr class="hover:bg-gray-50 transition-colors">
           <td class="px-6 py-5 text-sm text-gray-800 font-medium">
-            <span class="number-circle primary-number">{row.Number}</span>
+            <span
+              class="number-circle"
+              style="background-color: {$selectedLotto.primaryColor}; color: {$selectedLotto.primaryColor ===
+              '#eab308'
+                ? '#000'
+                : '#fff'}"
+            >
+              {row.Number}
+            </span>
           </td>
           <td class="px-6 py-5 text-sm text-gray-700"
             >{formatProbability(row.Probability)}</td
@@ -187,12 +198,8 @@
     width: 2.25rem; /* 36px */
     height: 2.25rem; /* 36px */
     border-radius: 9999px; /* full circle */
-    font-weight: 500;
-    color: white;
+    font-weight: 600;
     font-size: 0.875rem; /* 14px */
-  }
-
-  .primary-number {
-    background-color: #ef4444; /* tailwind red-500 */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   }
 </style>

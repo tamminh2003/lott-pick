@@ -6,6 +6,7 @@
     isScraping,
     scrapeError,
     loadLottoResults,
+    selectedLotto,
   } from "$lib/stores/lottoStore";
 
   let data = $derived($lottoResults || []);
@@ -31,7 +32,9 @@
 
 <div class="flex items-center justify-between mb-4">
   <div class="flex items-center gap-4">
-    <h2 class="text-lg font-bold text-gray-800">Historical Results</h2>
+    <h2 class="text-lg font-bold text-gray-800">
+      Historical Results ({$selectedLotto?.name})
+    </h2>
     <span
       class="text-sm text-gray-500 font-medium bg-gray-100 px-2 py-0.5 rounded-full"
       >{data.length} Draws</span
@@ -146,14 +149,27 @@
               <td class="px-6 py-5">
                 <div class="flex flex-wrap gap-2">
                   {#each row.Primaries as number}
-                    <span class="number-circle primary-number">{number}</span>
+                    <span
+                      class="number-circle"
+                      style="background-color: {$selectedLotto.primaryColor}; color: {$selectedLotto.primaryColor ===
+                      '#eab308'
+                        ? '#000'
+                        : '#fff'}"
+                    >
+                      {number}
+                    </span>
                   {/each}
                 </div>
               </td>
               <td class="px-6 py-5">
                 <div class="flex flex-wrap gap-2">
                   {#each row.Secondaries as number}
-                    <span class="number-circle secondary-number">{number}</span>
+                    <span
+                      class="number-circle"
+                      style="background-color: {$selectedLotto.secondaryColor}; color: #fff"
+                    >
+                      {number}
+                    </span>
                   {/each}
                 </div>
               </td>
@@ -178,16 +194,8 @@
     width: 2.25rem; /* 36px */
     height: 2.25rem; /* 36px */
     border-radius: 9999px; /* full circle */
-    font-weight: 500;
-    color: white;
+    font-weight: 600;
     font-size: 0.875rem; /* 14px */
-  }
-
-  .primary-number {
-    background-color: #ef4444; /* tailwind red-500 */
-  }
-
-  .secondary-number {
-    background-color: #3b82f6; /* tailwind blue-500 */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   }
 </style>

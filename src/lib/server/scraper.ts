@@ -8,12 +8,17 @@ const API_URL = 'https://data.api.thelott.com/sales/vmax/web/data/lotto/results/
  * @param dateEnd End date
  * @returns Array of LottoResult objects
  */
-export async function fetchLottoResultsRange(dateStart: Date, dateEnd: Date): Promise<LottoResult[]> {
+export async function fetchLottoResultsRange(
+    dateStart: Date,
+    dateEnd: Date,
+    product: string = 'TattsLotto',
+    company: string = 'Tattersalls'
+): Promise<LottoResult[]> {
     const payload = {
         "DateStart": dateStart.toISOString().replace('.000Z', 'Z'),
         "DateEnd": dateEnd.toISOString().replace('.000Z', 'Z'),
-        "ProductFilter": ["TattsLotto"],
-        "CompanyFilter": ["Tattersalls"]
+        "ProductFilter": [product],
+        "CompanyFilter": [company]
     };
 
     const response = await fetch(API_URL, {
@@ -54,7 +59,12 @@ export async function fetchLottoResultsRange(dateStart: Date, dateEnd: Date): Pr
  * Scrapes all results from a start year to an end year.
  * This mimics the logic in scrape_logic.js
  */
-export async function scrapeAllHistoricalResults(startYear: number, endYear: number): Promise<LottoResult[]> {
+export async function scrapeAllHistoricalResults(
+    startYear: number,
+    endYear: number,
+    product: string = 'TattsLotto',
+    company: string = 'Tattersalls'
+): Promise<LottoResult[]> {
     let allDraws: LottoResult[] = [];
     const payloads: { start: Date, end: Date }[] = [];
 
@@ -77,7 +87,7 @@ export async function scrapeAllHistoricalResults(startYear: number, endYear: num
         console.log(`Scraping batch ${i / concurrency + 1}...`);
 
         const results = await Promise.all(
-            chunk.map(p => fetchLottoResultsRange(p.start, p.end).catch(err => {
+            chunk.map(p => fetchLottoResultsRange(p.start, p.end, product, company).catch(err => {
                 console.error(`Error fetching sequence:`, err);
                 return [];
             }))

@@ -4,10 +4,14 @@ import { getTopPredictions } from '$lib/server/gemini';
 import { calculateEmpiricalProbabilities } from '$lib/server/analysis';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async () => {
+export const GET: RequestHandler = async ({ url }) => {
     try {
+        const product = url.searchParams.get('product') || 'TattsLotto';
+        const company = url.searchParams.get('company') || 'Tattersalls';
+        const count = parseInt(url.searchParams.get('count') || '7');
+
         // Fetch historical data for context (last 2 years approx)
-        const history = await scrapeAllHistoricalResults(2024, 2025);
+        const history = await scrapeAllHistoricalResults(2024, 2025, product, company);
 
         if (history.length === 0) {
             return json({ success: false, error: 'No historical data found to analyze' }, { status: 400 });
@@ -17,10 +21,10 @@ export const GET: RequestHandler = async () => {
         let method = 'AI';
 
         try {
-            predictions = await getTopPredictions(history);
+            predictions = await getTopPredictions(history, count);
         } catch (aiError) {
             console.warn('Gemini AI failed, falling back to frequency analysis:', aiError);
-            predictions = calculateEmpiricalProbabilities(history);
+            predictions = calculateEmpiricalProbabilities(history, count);
             method = 'Frequency Analysis (Fallback)';
         }
 

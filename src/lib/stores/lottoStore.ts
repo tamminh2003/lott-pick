@@ -1,7 +1,36 @@
-import { writable } from 'svelte/store';
+import { writable, get } from 'svelte/store';
 import type { LottoResult } from '$lib/models/LottoResult';
 import type { NextDrawProbability } from '$lib/models/NextDrawProbability';
 
+export interface LottoConfig {
+    name: string;
+    product: string;
+    company: string;
+    primaryColor: string;
+    secondaryColor: string;
+    predictionCount: number;
+}
+
+export const LOTTO_TYPES: LottoConfig[] = [
+    {
+        name: 'TattsLotto',
+        product: 'TattsLotto',
+        company: 'Tattersalls',
+        primaryColor: '#ef4444', // Red
+        secondaryColor: '#3b82f6', // Blue
+        predictionCount: 7
+    },
+    {
+        name: 'OzLotto',
+        product: 'OzLotto',
+        company: 'Tattersalls',
+        primaryColor: '#eab308', // Yellow
+        secondaryColor: '#15803d', // Green
+        predictionCount: 9
+    }
+];
+
+export const selectedLotto = writable<LottoConfig>(LOTTO_TYPES[0]);
 export const lottoResults = writable<LottoResult[] | null>(null);
 export const predictions = writable<NextDrawProbability[] | null>(null);
 export const isScraping = writable(false);
@@ -15,9 +44,10 @@ export const predictError = writable<string | null>(null);
 export async function loadLottoResults() {
     isScraping.set(true);
     scrapeError.set(null);
+    const config = get(selectedLotto);
 
     try {
-        const response = await fetch('/api/scrape');
+        const response = await fetch(`/api/scrape?product=${config.product}&company=${config.company}`);
         const data = await response.json();
 
         if (data.success) {
@@ -42,9 +72,10 @@ export async function loadLottoResults() {
 export async function loadPredictions() {
     isPredicting.set(true);
     predictError.set(null);
+    const config = get(selectedLotto);
 
     try {
-        const response = await fetch('/api/predict');
+        const response = await fetch(`/api/predict?product=${config.product}&company=${config.company}&count=${config.predictionCount}`);
         const data = await response.json();
 
         if (data.success) {
@@ -57,4 +88,15 @@ export async function loadPredictions() {
     } finally {
         isPredicting.set(false);
     }
+}
+
+/**
+ * Changes the selected lottery type and reloads data.
+ */
+export function changeLottoType(config: LottoConfig) {
+    selectedLotto.set(config);
+    lottoResults.set(null);
+    predictions.set(null);
+    loadLottoResults();
+    loadPredictions();
 }

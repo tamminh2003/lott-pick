@@ -5,7 +5,7 @@ import type { NextDrawProbability } from '$lib/models/NextDrawProbability';
 
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
 
-export async function getTopPredictions(history: LottoResult[]): Promise<NextDrawProbability[]> {
+export async function getTopPredictions(history: LottoResult[], count: number = 7): Promise<NextDrawProbability[]> {
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     // Prepare a concise summary of the history to keep token count down
@@ -18,7 +18,7 @@ export async function getTopPredictions(history: LottoResult[]): Promise<NextDra
 
     const prompt = `
         Analyze the following historical lottery data (last 50 draws). 
-        Based on empirical probability and frequency analysis, predict the top 7 numbers most likely to appear in the next draw.
+        Based on empirical probability and frequency analysis, predict the top ${count} numbers most likely to appear in the next draw.
         Provide the response ONLY as a JSON array of objects, where each object has "Number" (int) and "Probability" (float between 0 and 1, representing your confidence score/estimated frequency).
 
         Data: ${JSON.stringify(recentHistory)}
@@ -35,7 +35,7 @@ export async function getTopPredictions(history: LottoResult[]): Promise<NextDra
 
     try {
         const predictions: NextDrawProbability[] = JSON.parse(jsonString);
-        return predictions.sort((a, b) => b.Probability - a.Probability).slice(0, 7);
+        return predictions.sort((a, b) => b.Probability - a.Probability).slice(0, count);
     } catch (e) {
         console.error("Failed to parse Gemini response:", text);
         throw new Error("Invalid response from AI");
