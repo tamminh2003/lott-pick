@@ -3,6 +3,7 @@
   import { initLottoData } from "$lib/stores/lottoStore";
   import NextDrawTable from "$lib/components/NextDrawTable.svelte";
   import ResultTable from "$lib/components/ResultTable.svelte";
+  import PowerBallResult from "$lib/components/PowerBallResult.svelte";
 
   onMount(() => {
     initLottoData();
@@ -13,6 +14,8 @@
   <div class="space-y-4">
     <ResultTable />
   </div>
+
+  <PowerBallResult />
 
   <div class="space-y-4">
     <NextDrawTable />
