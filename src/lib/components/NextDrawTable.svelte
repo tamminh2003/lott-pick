@@ -9,6 +9,8 @@
 
   let data = $derived($predictions || []);
 
+  let showMethodInfo = $state(false);
+
   onMount(() => {
     if (!$predictions && !$isPredicting) {
       loadPredictions();
@@ -20,16 +22,74 @@
   }
 </script>
 
-<div class="flex items-center justify-between mb-4">
+<div class="flex items-center justify-between mb-4 relative">
   <div class="flex flex-col">
     <h2 class="text-lg font-bold text-gray-800">Next Draw Predictions</h2>
-    <p class="text-xs text-blue-500 font-medium opacity-80">
-      Method: {$isPredicting
-        ? "Calculating..."
-        : data.length > 0
-          ? "Empirical Pattern Analysis"
-          : "None"}
-    </p>
+    <div class="relative inline-block">
+      <button
+        onclick={() => (showMethodInfo = !showMethodInfo)}
+        class="text-xs text-blue-500 font-medium opacity-80 hover:opacity-100 flex items-center gap-1 cursor-help transition-opacity"
+      >
+        Method: {$isPredicting
+          ? "Calculating..."
+          : data.length > 0
+            ? "Empirical Pattern Analysis"
+            : "None"}
+        <svg
+          class="w-3 h-3"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+      </button>
+
+      {#if showMethodInfo}
+        <div
+          class="absolute left-0 top-6 z-50 w-64 p-4 bg-white border border-gray-200 rounded-lg shadow-xl text-xs text-gray-600 animate-in fade-in slide-in-from-top-1 duration-200"
+        >
+          <div class="flex justify-between items-start mb-2">
+            <h4 class="font-bold text-gray-800">About Empirical Analysis</h4>
+            <button
+              onclick={() => (showMethodInfo = false)}
+              class="text-gray-400 hover:text-gray-600"
+            >
+              <svg
+                class="w-3 h-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+          <p class="leading-relaxed">
+            Our dual-model approach uses <strong>Gemini AI</strong> to identify
+            complex nonlinear patterns, and <strong>Frequency Analysis</strong> as
+            a fallback to track historical trends. It calculates the statistical
+            "heat" of numbers over time to find clusters with the highest mathematical
+            probability of appearing next.
+          </p>
+          <div
+            class="mt-2 pt-2 border-t border-gray-50 text-[10px] text-gray-400 italic"
+          >
+            Note: Lottery selection is random; this is for demonstration only.
+          </div>
+        </div>
+      {/if}
+    </div>
   </div>
   <button
     onclick={loadPredictions}
