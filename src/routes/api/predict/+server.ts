@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { scrapeAllHistoricalResults } from '$lib/server/scraper';
 import { getTopPredictions } from '$lib/server/gemini';
+import { calculateEmpiricalProbabilities } from '$lib/server/analysis';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async () => {
@@ -12,10 +13,20 @@ export const GET: RequestHandler = async () => {
             return json({ success: false, error: 'No historical data found to analyze' }, { status: 400 });
         }
 
-        const predictions = await getTopPredictions(history);
+        let predictions;
+        let method = 'AI';
+
+        try {
+            predictions = await getTopPredictions(history);
+        } catch (aiError) {
+            console.warn('Gemini AI failed, falling back to frequency analysis:', aiError);
+            predictions = calculateEmpiricalProbabilities(history);
+            method = 'Frequency Analysis (Fallback)';
+        }
 
         return json({
             success: true,
+            method,
             predictions
         });
     } catch (error: any) {

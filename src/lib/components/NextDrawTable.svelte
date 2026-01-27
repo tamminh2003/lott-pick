@@ -21,7 +21,16 @@
 </script>
 
 <div class="flex items-center justify-between mb-4">
-  <h2 class="text-lg font-bold text-gray-800">Next Draw Predictions (AI)</h2>
+  <div class="flex flex-col">
+    <h2 class="text-lg font-bold text-gray-800">Next Draw Predictions</h2>
+    <p class="text-xs text-blue-500 font-medium opacity-80">
+      Method: {$isPredicting
+        ? "Calculating..."
+        : data.length > 0
+          ? "Empirical Pattern Analysis"
+          : "None"}
+    </p>
+  </div>
   <button
     onclick={loadPredictions}
     disabled={$isPredicting}
