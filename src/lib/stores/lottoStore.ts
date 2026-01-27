@@ -47,6 +47,8 @@ export const predictError = writable<string | null>(null);
  * Fetches lotto results and updates the store.
  */
 export async function loadLottoResults() {
+    if (get(isScraping)) return;
+
     isScraping.set(true);
     scrapeError.set(null);
     const config = get(selectedLotto);
@@ -75,6 +77,8 @@ export async function loadLottoResults() {
  * Fetches AI predictions and updates the store.
  */
 export async function loadPredictions() {
+    if (get(isPredicting)) return;
+
     isPredicting.set(true);
     predictError.set(null);
     const config = get(selectedLotto);
@@ -96,12 +100,19 @@ export async function loadPredictions() {
 }
 
 /**
+ * Initializes all data for the selected lotto.
+ */
+export async function initLottoData() {
+    await loadLottoResults();
+    await loadPredictions();
+}
+
+/**
  * Changes the selected lottery type and reloads data.
  */
-export function changeLottoType(config: LottoConfig) {
+export async function changeLottoType(config: LottoConfig) {
     selectedLotto.set(config);
     lottoResults.set(null);
     predictions.set(null);
-    loadLottoResults();
-    loadPredictions();
+    await initLottoData();
 }

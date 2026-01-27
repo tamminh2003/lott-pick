@@ -12,11 +12,6 @@
 
   let showMethodInfo = $state(false);
 
-  onMount(() => {
-    if (!$predictions && !$isPredicting) {
-      loadPredictions();
-    }
-  });
 
   function formatProbability(prob: number): string {
     return (prob * 100).toFixed(1) + "%";

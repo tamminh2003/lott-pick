@@ -1,6 +1,12 @@
 <script lang="ts">
+  import { onMount } from "svelte";
+  import { initLottoData } from "$lib/stores/lottoStore";
   import NextDrawTable from "$lib/components/NextDrawTable.svelte";
   import ResultTable from "$lib/components/ResultTable.svelte";
+
+  onMount(() => {
+    initLottoData();
+  });
 </script>
 
 <div class="max-w-6xl mx-auto p-4 md:p-8 space-y-12">

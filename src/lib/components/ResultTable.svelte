@@ -12,11 +12,6 @@
   let data = $derived($lottoResults || []);
   let isCollapsed = $state(true);
 
-  onMount(() => {
-    if (!$lottoResults && !$isScraping) {
-      loadLottoResults();
-    }
-  });
 
   function formatDate(date: Date): string {
     if (!(date instanceof Date) || isNaN(date.getTime())) return "Invalid Date";
