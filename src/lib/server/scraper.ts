@@ -67,25 +67,24 @@ export async function scrapeAllHistoricalResults(
     product: string = 'TattsLotto',
     company: string = 'Tattersalls'
 ): Promise<LottoResult[]> {
+    console.log(`[Scraper] Starting ${product} scrape check for ${startYear}-${endYear}`);
+
     // 1. Get cached data
     const cachedResults = await getCachedResults(product);
+    console.log(`[Scraper] Retrieved ${cachedResults.length} draws from Netlify Blobs for ${product}.`);
+
     const cachedDrawNumbers = new Set(cachedResults.map(d => d.DrawNumber));
 
     // 2. Determine which months we need to check
-    // We check the requested range, and if cachedResults is empty we start from scratch.
     const payloads: { start: Date, end: Date, monthKey: string }[] = [];
     const now = new Date();
 
     for (let year = startYear; year <= endYear; year++) {
         for (let month = 0; month < 12; month++) {
-            // Optimization: Don't scrape future months
             const checkDate = new Date(Date.UTC(year, month, 1));
             if (checkDate > now) continue;
 
             const monthKey = `${year}-${month}`;
-
-            // Heuristic: If we have ANY draws for this month in cache, we assume the month is processed.
-            // For a production app, we might want a more robust check (e.g. tracking processed month-keys).
             const startDate = new Date(Date.UTC(year, month, 0, 13, 0, 0));
             const endDate = new Date(Date.UTC(year, month + 1, 0, 12, 59, 59));
 
@@ -100,11 +99,11 @@ export async function scrapeAllHistoricalResults(
     }
 
     if (payloads.length === 0) {
-        console.log(`All data for ${product} is up to date in cache.`);
+        console.log(`[Scraper] All requested data for ${product} is up to date in cache.`);
         return cachedResults;
     }
 
-    console.log(`Found ${payloads.length} months to scrape for ${product}.`);
+    console.log(`[Scraper] Cache incomplete. Found ${payloads.length} months missing:`, payloads.map(p => p.monthKey).join(', '));
 
     let newDrawsCount = 0;
     const allResults = [...cachedResults];
@@ -113,11 +112,11 @@ export async function scrapeAllHistoricalResults(
     const concurrency = 10;
     for (let i = 0; i < payloads.length; i += concurrency) {
         const chunk = payloads.slice(i, i + concurrency);
-        console.log(`Scraping missing batch ${i / concurrency + 1}...`);
+        console.log(`[Scraper] Scraping batch ${Math.floor(i / concurrency) + 1}...`);
 
         const results = await Promise.all(
             chunk.map(p => fetchLottoResultsRange(p.start, p.end, product, company).catch(err => {
-                console.error(`Error fetching sequence for ${p.monthKey}:`, err);
+                console.error(`[Scraper] Error fetching sequence for ${p.monthKey}:`, err);
                 return [];
             }))
         );
@@ -137,12 +136,12 @@ export async function scrapeAllHistoricalResults(
 
     // 4. Update cache if we found new data
     if (newDrawsCount > 0) {
-        console.log(`Adding ${newDrawsCount} new draws to ${product} cache.`);
-        // Sort by date ascending before saving
+        console.log(`[Scraper] Adding ${newDrawsCount} new draws to ${product} cache. Total: ${allResults.length}`);
         allResults.sort((a, b) => a.DrawDate.getTime() - b.DrawDate.getTime());
         await saveResultsToCache(product, allResults);
     }
 
+    console.log(`[Scraper] Finished. Returning ${allResults.length} draws for ${product}.`);
     return allResults;
 }
 

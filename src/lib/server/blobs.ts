@@ -10,20 +10,18 @@ const STORE_NAME = 'lotto-results';
  */
 function getLottoStore() {
     try {
-        console.log("DEBUG");
         if (env.NETLIFY_SITE_ID && env.NETLIFY_AUTH_TOKEN) {
-            let temp = getStore({
+            console.log(`[Blobs] Initializing store '${STORE_NAME}' with Site ID and Token.`);
+            return getStore({
                 name: STORE_NAME,
                 siteID: env.NETLIFY_SITE_ID,
                 token: env.NETLIFY_AUTH_TOKEN
             });
-            if (!temp) console.log("Store Not Found");
-            return temp;
         }
-        let temp = getStore(STORE_NAME);
-        if (!temp) console.log("Store Not Found");
-        return temp;
+        console.log(`[Blobs] Initializing store '${STORE_NAME}' using default environment.`);
+        return getStore(STORE_NAME);
     } catch (e) {
+        console.error("[Blobs] Error initializing store:", e);
         return null;
     }
 }
@@ -32,20 +30,24 @@ function getLottoStore() {
  * Loads historical results for a specific product.
  */
 export async function getCachedResults(product: string): Promise<LottoResult[]> {
-    // Try Netlify Blobs
     const store = getLottoStore();
     if (store) {
         try {
+            console.log(`[Blobs] Fetching data for product: ${product}`);
             const data = await store.get(product, { type: 'json' }) as any[];
             if (data) {
+                console.log(`[Blobs] Successfully retrieved ${data.length} records for ${product}.`);
                 return data.map(draw => ({
                     ...draw,
                     DrawDate: new Date(draw.DrawDate)
                 }));
             }
+            console.log(`[Blobs] No data found in store for ${product}.`);
         } catch (error) {
-            console.warn(`Netlify Blobs not available for ${product}`);
+            console.error(`[Blobs] Error fetching from Netlify Blobs for ${product}:`, error);
         }
+    } else {
+        console.warn("[Blobs] Netlify Blob store not available.");
     }
 
     return [];
