@@ -13,7 +13,19 @@ const LOCAL_CACHE_DIR = '.lotto-cache';
  */
 function getLottoStore() {
     try {
-        return getStore(STORE_NAME);
+        console.log("DEBUG");
+        if (env.NETLIFY_SITE_ID && env.NETLIFY_AUTH_TOKEN) {
+            let temp = getStore({
+                name: STORE_NAME,
+                siteID: env.NETLIFY_SITE_ID,
+                token: env.NETLIFY_AUTH_TOKEN
+            });
+            if (!temp) console.log("Store Not Found");
+            return temp;
+        }
+        let temp = getStore(STORE_NAME);
+        if (!temp) console.log("Store Not Found");
+        return temp;
     } catch (e) {
         return null;
     }
