@@ -1,6 +1,8 @@
 import { writable, get } from 'svelte/store';
 import type { LottoResult } from '$lib/models/LottoResult';
 import type { NextDrawProbability } from '$lib/models/NextDrawProbability';
+import tattslottoIcon from '$lib/assets/tattslotto_icon.webp';
+import ozlottoIcon from '$lib/assets/ozlotto_icon.avif';
 
 export interface LottoConfig {
     name: string;
@@ -9,6 +11,7 @@ export interface LottoConfig {
     primaryColor: string;
     secondaryColor: string;
     predictionCount: number;
+    icon: string;
 }
 
 export const LOTTO_TYPES: LottoConfig[] = [
@@ -18,7 +21,8 @@ export const LOTTO_TYPES: LottoConfig[] = [
         company: 'Tattersalls',
         primaryColor: '#ef4444', // Red
         secondaryColor: '#3b82f6', // Blue
-        predictionCount: 7
+        predictionCount: 7,
+        icon: tattslottoIcon
     },
     {
         name: 'OzLotto',
@@ -26,7 +30,8 @@ export const LOTTO_TYPES: LottoConfig[] = [
         company: 'Tattersalls',
         primaryColor: '#eab308', // Yellow
         secondaryColor: '#15803d', // Green
-        predictionCount: 9
+        predictionCount: 9,
+        icon: ozlottoIcon
     }
 ];
 

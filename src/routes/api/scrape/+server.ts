@@ -7,7 +7,10 @@ export const GET: RequestHandler = async ({ url }) => {
         const product = url.searchParams.get('product') || 'TattsLotto';
         const company = url.searchParams.get('company') || 'Tattersalls';
 
-        const results = await scrapeAllHistoricalResults(2024, 2025, product, company); // Just a sample range for the API
+        const startYear = parseInt(url.searchParams.get('startYear') || '2017');
+        const endYear = parseInt(url.searchParams.get('endYear') || '2025');
+
+        const results = await scrapeAllHistoricalResults(startYear, endYear, product, company);
         return json({
             success: true,
             total: results.length,

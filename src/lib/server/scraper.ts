@@ -55,9 +55,11 @@ export async function fetchLottoResultsRange(
     }));
 }
 
+import { getCachedResults, saveResultsToCache } from './blobs';
+
 /**
- * Scrapes all results from a start year to an end year.
- * This mimics the logic in scrape_logic.js
+ * Scrapes all results from a start year to an end year, accumulatively.
+ * It reads the cache first, finds missing months, and only scrapes what's needed.
  */
 export async function scrapeAllHistoricalResults(
     startYear: number,
@@ -65,43 +67,83 @@ export async function scrapeAllHistoricalResults(
     product: string = 'TattsLotto',
     company: string = 'Tattersalls'
 ): Promise<LottoResult[]> {
-    let allDraws: LottoResult[] = [];
-    const payloads: { start: Date, end: Date }[] = [];
+    // 1. Get cached data
+    const cachedResults = await getCachedResults(product);
+    const cachedDrawNumbers = new Set(cachedResults.map(d => d.DrawNumber));
+
+    // 2. Determine which months we need to check
+    // We check the requested range, and if cachedResults is empty we start from scratch.
+    const payloads: { start: Date, end: Date, monthKey: string }[] = [];
+    const now = new Date();
 
     for (let year = startYear; year <= endYear; year++) {
         for (let month = 0; month < 12; month++) {
-            // month is 0-indexed (0 for Jan, 11 for Dec)
-            // DateStart: 13:00:00Z on the last day of the previous month.
+            // Optimization: Don't scrape future months
+            const checkDate = new Date(Date.UTC(year, month, 1));
+            if (checkDate > now) continue;
+
+            const monthKey = `${year}-${month}`;
+
+            // Heuristic: If we have ANY draws for this month in cache, we assume the month is processed.
+            // For a production app, we might want a more robust check (e.g. tracking processed month-keys).
             const startDate = new Date(Date.UTC(year, month, 0, 13, 0, 0));
-            // DateEnd: 12:59:59Z on the last day of the current month.
             const endDate = new Date(Date.UTC(year, month + 1, 0, 12, 59, 59));
 
-            payloads.push({ start: startDate, end: endDate });
+            const hasMonthInCache = cachedResults.some(d =>
+                d.DrawDate >= startDate && d.DrawDate <= endDate
+            );
+
+            if (!hasMonthInCache) {
+                payloads.push({ start: startDate, end: endDate, monthKey });
+            }
         }
     }
 
-    // Process in batches (concurrency 10 as in example)
+    if (payloads.length === 0) {
+        console.log(`All data for ${product} is up to date in cache.`);
+        return cachedResults;
+    }
+
+    console.log(`Found ${payloads.length} months to scrape for ${product}.`);
+
+    let newDrawsCount = 0;
+    const allResults = [...cachedResults];
+
+    // 3. Process missing months in batches
     const concurrency = 10;
     for (let i = 0; i < payloads.length; i += concurrency) {
         const chunk = payloads.slice(i, i + concurrency);
-        console.log(`Scraping batch ${i / concurrency + 1}...`);
+        console.log(`Scraping missing batch ${i / concurrency + 1}...`);
 
         const results = await Promise.all(
             chunk.map(p => fetchLottoResultsRange(p.start, p.end, product, company).catch(err => {
-                console.error(`Error fetching sequence:`, err);
+                console.error(`Error fetching sequence for ${p.monthKey}:`, err);
                 return [];
             }))
         );
 
         results.forEach(draws => {
-            allDraws.push(...draws);
+            if (draws) {
+                draws.forEach(draw => {
+                    if (!cachedDrawNumbers.has(draw.DrawNumber)) {
+                        allResults.push(draw);
+                        cachedDrawNumbers.add(draw.DrawNumber);
+                        newDrawsCount++;
+                    }
+                });
+            }
         });
     }
 
-    // Sort by date ascending
-    allDraws.sort((a, b) => a.DrawDate.getTime() - b.DrawDate.getTime());
+    // 4. Update cache if we found new data
+    if (newDrawsCount > 0) {
+        console.log(`Adding ${newDrawsCount} new draws to ${product} cache.`);
+        // Sort by date ascending before saving
+        allResults.sort((a, b) => a.DrawDate.getTime() - b.DrawDate.getTime());
+        await saveResultsToCache(product, allResults);
+    }
 
-    return allDraws;
+    return allResults;
 }
 
 /**
