@@ -8,7 +8,7 @@ export const GET: RequestHandler = async ({ url }) => {
         const company = url.searchParams.get('company') || 'Tattersalls';
 
         const startYear = parseInt(url.searchParams.get('startYear') || '2017');
-        const endYear = parseInt(url.searchParams.get('endYear') || '2025');
+        const endYear = parseInt(url.searchParams.get('endYear') || new Date().getFullYear().toString());
 
         const results = await scrapeAllHistoricalResults(startYear, endYear, product, company);
         return json({
