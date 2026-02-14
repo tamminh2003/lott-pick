@@ -4,6 +4,10 @@
   import NextDrawTable from "$lib/components/NextDrawTable.svelte";
   import ResultTable from "$lib/components/ResultTable.svelte";
   import PowerBallResult from "$lib/components/PowerBallResult.svelte";
+  import TripletDisplay from "$lib/components/TripletDisplay.svelte";
+  import PairDisplay from "$lib/components/PairDisplay.svelte";
+  import QuadrupletDisplay from "$lib/components/QuadrupletDisplay.svelte";
+  import CombinedDisplay from "$lib/components/CombinedDisplay.svelte";
 
   onMount(() => {
     initLottoData();
@@ -20,6 +24,14 @@
   <div class="space-y-4">
     <NextDrawTable />
   </div>
+
+  <PairDisplay />
+
+  <TripletDisplay />
+
+  <QuadrupletDisplay />
+
+  <CombinedDisplay />
 
   <footer class="pt-8 border-t border-gray-100">
     <div

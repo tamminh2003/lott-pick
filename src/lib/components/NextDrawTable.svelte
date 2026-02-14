@@ -22,7 +22,7 @@
 >
   <div class="flex flex-col">
     <h2 class="text-base sm:text-lg font-bold text-gray-800">
-      Next Draw Predictions ({$selectedLotto?.name})
+      Most Appearing Numbers ({$selectedLotto?.name})
     </h2>
     <div class="relative inline-block">
       <button

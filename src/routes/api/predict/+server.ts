@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { scrapeAllHistoricalResults } from '$lib/server/scraper';
-import { getTopPredictions } from '$lib/server/gemini';
+import { getTopPredictions } from '$lib/server/ai';
 import { calculateEmpiricalProbabilities } from '$lib/server/analysis';
 import type { RequestHandler } from './$types';
 
@@ -11,7 +11,7 @@ export const GET: RequestHandler = async ({ url }) => {
         const count = parseInt(url.searchParams.get('count') || '7');
 
         // Fetch historical data for context (last 2 years approx)
-        const history = await scrapeAllHistoricalResults(2024, 2025, product, company);
+        const history = await scrapeAllHistoricalResults(2024, new Date().getFullYear(), product, company);
 
         if (history.length === 0) {
             return json({ success: false, error: 'No historical data found to analyze' }, { status: 400 });
