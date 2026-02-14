@@ -8,6 +8,8 @@
   import PairDisplay from "$lib/components/PairDisplay.svelte";
   import QuadrupletDisplay from "$lib/components/QuadrupletDisplay.svelte";
   import CombinedDisplay from "$lib/components/CombinedDisplay.svelte";
+  import ColdNumbersDisplay from "$lib/components/ColdNumbersDisplay.svelte";
+  import FrequencyBarChart from "$lib/components/FrequencyBarChart.svelte";
 
   onMount(() => {
     initLottoData();
@@ -24,6 +26,10 @@
   <div class="space-y-4">
     <NextDrawTable />
   </div>
+
+  <ColdNumbersDisplay />
+
+  <FrequencyBarChart />
 
   <PairDisplay />
 

@@ -153,14 +153,14 @@
                     >
                         <div class="flex flex-col">
                             <span class="text-[10px] text-gray-400"
-                                >Composite Score</span
+                                >Scaled Index</span
                             >
                             <span class="text-sm font-bold text-gray-900"
-                                >{match.TotalScore}</span
+                                >{match.AdjustedScore.toFixed(1)}</span
                             >
                         </div>
                         <div class="text-[9px] text-gray-300 font-medium">
-                            Rank Lower is Better
+                            Lower is Better
                         </div>
                     </div>
                 </div>

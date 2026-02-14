@@ -17,16 +17,8 @@ export const GET: RequestHandler = async ({ url }) => {
             return json({ success: false, error: 'No historical data found to analyze' }, { status: 400 });
         }
 
-        let predictions;
-        let method = 'AI';
-
-        try {
-            predictions = await getTopPredictions(history, product, count);
-        } catch (aiError) {
-            console.warn('Gemini AI failed, falling back to frequency analysis:', aiError);
-            predictions = calculateEmpiricalProbabilities(history, count);
-            method = 'Frequency Analysis (Fallback)';
-        }
+        const predictions = calculateEmpiricalProbabilities(history, count);
+        const method = 'Frequency Analysis';
 
         return json({
             success: true,

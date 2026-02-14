@@ -32,6 +32,59 @@ export function calculateEmpiricalProbabilities(history: LottoResult[], count: n
 }
 
 /**
+ * Calculates lottery number frequencies from historical data and returns the bottom N.
+ * These are the "cold" numbers.
+ */
+export function calculateLeastAppearingNumbers(history: LottoResult[], count: number = 7): NextDrawProbability[] {
+    if (!history || history.length === 0) return [];
+
+    const frequencyMap: Record<number, number> = {};
+
+    // Analyze all primary numbers in history
+    history.forEach(draw => {
+        draw.Primaries.forEach(num => {
+            frequencyMap[num] = (frequencyMap[num] || 0) + 1;
+        });
+    });
+
+    // Convert map to array of NextDrawProbability objects
+    const probabilities: NextDrawProbability[] = Object.entries(frequencyMap).map(([num, count]) => ({
+        Number: parseInt(num),
+        Probability: count / history.length
+    }));
+
+    // Sort by probability ascending and take bottom N
+    return probabilities
+        .sort((a, b) => a.Probability - b.Probability)
+        .slice(0, count);
+}
+
+/**
+ * Calculates total frequency for every number in the valid range.
+ */
+export function calculateFrequencyDistribution(history: LottoResult[], maxNumber: number): { Number: number, Count: number }[] {
+    if (!history || history.length === 0) return [];
+
+    const frequencyMap: Record<number, number> = {};
+    for (let i = 1; i <= maxNumber; i++) {
+        frequencyMap[i] = 0;
+    }
+
+    history.forEach(draw => {
+        draw.Primaries.forEach(num => {
+            if (num >= 1 && num <= maxNumber) {
+                frequencyMap[num]++;
+            }
+        });
+    });
+
+    return Object.entries(frequencyMap).map(([num, count]) => ({
+        Number: parseInt(num),
+        Count: count
+    }));
+}
+
+/**
  * Calculates the most appearing combination of 3 numbers from history.
  */
 export function calculateMostAppearingTriplets(history: LottoResult[], topCount: number = 10): { Numbers: number[], Count: number }[] {
@@ -139,8 +192,22 @@ export interface CombinedRanking {
     TripletRank?: number;
     QuadRank?: number;
     TotalScore: number;
-    Tier: number; // 1: P+T+Q, 2: T+Q, 3: Q+P, 4: T+P
+    Tier: number; // 1: P+T+Q, 2: T+Q, 3: Q+P, 4: Tri+Pair
+    AdjustedScore: number;
 }
+
+/**
+ * Scaling factors for each tier to allow multidimensional balance.
+ * The TotalScore (sum of ranks) is divided by these factors for sorting.
+ * Higher factor = stronger priority for that tier.
+ * Tweak these to change how tiers interact.
+ */
+export const TIER_SCORE_SCALES: Record<number, number> = {
+    1: 5.0, // Triple Synchronicity (P+T+Q)
+    2: 2.5, // Quad-Tri Matrix (T+Q)
+    3: 1.5, // Quad-Pair Link (Q+P)
+    4: 1.0  // Tri-Pair Link (T+P)
+};
 
 /**
  * Matches top pairs, triplets, and quadruplets and ranks them by combined score.
@@ -185,25 +252,31 @@ export function calculateCombinedRankings(history: LottoResult[]): CombinedRanki
                     const pKey = pSub.join(',');
                     if (pairMap.has(pKey)) {
                         const pRank = pairMap.get(pKey)!;
+                        const totalScore = qRank + tRank + pRank;
+                        const tier = 1;
                         results.push({
                             Numbers: qNums,
                             QuadRank: qRank,
                             TripletRank: tRank,
                             PairRank: pRank,
-                            TotalScore: qRank + tRank + pRank,
-                            Tier: 1 // Quad + Triplet + Pair
+                            TotalScore: totalScore,
+                            Tier: tier,
+                            AdjustedScore: totalScore / TIER_SCORE_SCALES[tier]
                         });
                         matchedPairInTri = true;
                     }
                 }
 
                 if (!matchedPairInTri) {
+                    const totalScore = qRank + tRank;
+                    const tier = 2;
                     results.push({
                         Numbers: qNums,
                         QuadRank: qRank,
                         TripletRank: tRank,
-                        TotalScore: qRank + tRank,
-                        Tier: 2 // Quad + Triplet
+                        TotalScore: totalScore,
+                        Tier: tier,
+                        AdjustedScore: totalScore / TIER_SCORE_SCALES[tier]
                     });
                 }
             }
@@ -216,12 +289,16 @@ export function calculateCombinedRankings(history: LottoResult[]): CombinedRanki
                     const pSub = [qNums[i], qNums[j]];
                     const pKey = pSub.join(',');
                     if (pairMap.has(pKey)) {
+                        const pRank = pairMap.get(pKey)!;
+                        const totalScore = qRank + pRank;
+                        const tier = 3;
                         results.push({
                             Numbers: qNums,
                             QuadRank: qRank,
-                            PairRank: pairMap.get(pKey)!,
-                            TotalScore: qRank + pairMap.get(pKey)!,
-                            Tier: 3 // Quad + Pair
+                            PairRank: pRank,
+                            TotalScore: totalScore,
+                            Tier: tier,
+                            AdjustedScore: totalScore / TIER_SCORE_SCALES[tier]
                         });
                     }
                 }
@@ -240,24 +317,28 @@ export function calculateCombinedRankings(history: LottoResult[]): CombinedRanki
                 const pSub = tNums.filter((_, idx) => idx !== i);
                 const pKey = pSub.join(',');
                 if (pairMap.has(pKey)) {
+                    const pRank = pairMap.get(pKey)!;
+                    const totalScore = tRank + pRank;
+                    const tier = 4;
                     results.push({
                         Numbers: tNums,
                         TripletRank: tRank,
-                        PairRank: pairMap.get(pKey)!,
-                        TotalScore: tRank + pairMap.get(pKey)!,
-                        Tier: 4 // Triplet + Pair
+                        PairRank: pRank,
+                        TotalScore: totalScore,
+                        Tier: tier,
+                        AdjustedScore: totalScore / TIER_SCORE_SCALES[tier]
                     });
                 }
             }
         }
     });
 
-    // Sort: 1st by Tier (lower is higher priority: 1 > 2 > 3 > 4)
-    // 2nd by TotalScore (lower rank sum is better)
+    // Sort primarily by AdjustedScore
+    // 2nd by Tier to break ties
     return results.sort((a, b) => {
-        if (a.Tier !== b.Tier) {
-            return a.Tier - b.Tier;
+        if (Math.abs(a.AdjustedScore - b.AdjustedScore) > 0.001) {
+            return a.AdjustedScore - b.AdjustedScore;
         }
-        return a.TotalScore - b.TotalScore;
+        return a.Tier - b.Tier;
     });
 }

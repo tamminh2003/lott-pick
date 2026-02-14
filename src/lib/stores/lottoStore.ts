@@ -13,6 +13,7 @@ export interface LottoConfig {
     secondaryColor: string;
     predictionCount: number;
     icon: string;
+    maxNumber: number;
 }
 
 export const LOTTO_TYPES: LottoConfig[] = [
@@ -23,7 +24,8 @@ export const LOTTO_TYPES: LottoConfig[] = [
         primaryColor: '#ef4444', // Red
         secondaryColor: '#3b82f6', // Blue
         predictionCount: 7,
-        icon: tattslottoIcon
+        icon: tattslottoIcon,
+        maxNumber: 45
     },
     {
         name: 'OzLotto',
@@ -32,7 +34,8 @@ export const LOTTO_TYPES: LottoConfig[] = [
         primaryColor: '#eab308', // Yellow
         secondaryColor: '#15803d', // Green
         predictionCount: 9,
-        icon: ozlottoIcon
+        icon: ozlottoIcon,
+        maxNumber: 47
     },
     {
         name: 'Powerball',
@@ -41,7 +44,8 @@ export const LOTTO_TYPES: LottoConfig[] = [
         primaryColor: '#2563eb', // Blue
         secondaryColor: '#1e3a8a', // Dark Blue
         predictionCount: 8,
-        icon: powerballIcon
+        icon: powerballIcon,
+        maxNumber: 35
     }
 ];
 
@@ -64,6 +68,12 @@ export const quadrupletError = writable<string | null>(null);
 export const combinedAnalysis = writable<{ rankings: any[], totalDraws: number } | null>(null);
 export const isAnalyzingCombined = writable(false);
 export const combinedError = writable<string | null>(null);
+export const coldNumbersAnalysis = writable<{ coldNumbers: NextDrawProbability[], totalDraws: number } | null>(null);
+export const isAnalyzingCold = writable(false);
+export const coldError = writable<string | null>(null);
+export const frequencyDistribution = writable<{ distribution: { Number: number, Count: number }[], totalDraws: number } | null>(null);
+export const isAnalyzingFrequency = writable(false);
+export const frequencyError = writable<string | null>(null);
 
 /**
  * Fetches lotto results and updates the store.
@@ -238,6 +248,64 @@ export async function loadCombinedAnalysis() {
 }
 
 /**
+ * Fetches cold numbers analysis and updates the store.
+ */
+export async function loadColdNumbersAnalysis() {
+    if (get(isAnalyzingCold)) return;
+
+    isAnalyzingCold.set(true);
+    coldError.set(null);
+    const config = get(selectedLotto);
+
+    try {
+        const response = await fetch(`/api/analysis/cold-numbers?product=${config.product}&company=${config.company}`);
+        const data = await response.json();
+
+        if (data.success) {
+            coldNumbersAnalysis.set({
+                coldNumbers: data.coldNumbers,
+                totalDraws: data.totalDraws
+            });
+        } else {
+            coldError.set(data.error || 'Failed to fetch cold numbers analysis');
+        }
+    } catch (err: any) {
+        coldError.set(err.message || 'An unexpected error occurred during cold numbers analysis');
+    } finally {
+        isAnalyzingCold.set(false);
+    }
+}
+
+/**
+ * Fetches frequency distribution analysis and updates the store.
+ */
+export async function loadFrequencyDistribution() {
+    if (get(isAnalyzingFrequency)) return;
+
+    isAnalyzingFrequency.set(true);
+    frequencyError.set(null);
+    const config = get(selectedLotto);
+
+    try {
+        const response = await fetch(`/api/analysis/frequency-distribution?product=${config.product}&company=${config.company}`);
+        const data = await response.json();
+
+        if (data.success) {
+            frequencyDistribution.set({
+                distribution: data.distribution,
+                totalDraws: data.totalDraws
+            });
+        } else {
+            frequencyError.set(data.error || 'Failed to fetch frequency distribution');
+        }
+    } catch (err: any) {
+        frequencyError.set(err.message || 'An unexpected error occurred during frequency analysis');
+    } finally {
+        isAnalyzingFrequency.set(false);
+    }
+}
+
+/**
  * Initializes all data for the selected lotto.
  */
 export async function initLottoData() {
@@ -247,7 +315,9 @@ export async function initLottoData() {
         loadTripletAnalysis(),
         loadPairAnalysis(),
         loadQuadrupletAnalysis(),
-        loadCombinedAnalysis()
+        loadCombinedAnalysis(),
+        loadColdNumbersAnalysis(),
+        loadFrequencyDistribution()
     ]);
 }
 
@@ -262,5 +332,7 @@ export async function changeLottoType(config: LottoConfig) {
     pairAnalysis.set(null);
     quadrupletAnalysis.set(null);
     combinedAnalysis.set(null);
+    coldNumbersAnalysis.set(null);
+    frequencyDistribution.set(null);
     await initLottoData();
 }
