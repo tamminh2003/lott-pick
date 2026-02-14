@@ -10,18 +10,22 @@
     let data = $derived($combinedAnalysis?.rankings || []);
     let totalDraws = $derived($combinedAnalysis?.totalDraws || 1);
 
-    function getStrength(totalScore: number): string {
-        if (totalScore <= 10) return "Exceptional";
-        if (totalScore <= 30) return "High";
-        if (totalScore <= 50) return "Moderate";
+    function getStrength(tier: number, totalScore: number): string {
+        if (tier === 1) return "Triple Synchronicity";
+        if (tier === 2) return "Quad-Tri Matrix";
+        if (tier === 3) return "Quad-Pair Link";
+        if (tier === 4) return "Tri-Pair Link";
         return "Noteworthy";
     }
 
-    function getStrengthColor(totalScore: number): string {
-        if (totalScore <= 10) return "bg-purple-100 text-purple-700";
-        if (totalScore <= 30) return "bg-blue-100 text-blue-700";
-        if (totalScore <= 50) return "bg-emerald-100 text-emerald-700";
-        return "bg-gray-100 text-gray-700";
+    function getStrengthColor(tier: number): string {
+        if (tier === 1)
+            return "bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200";
+        if (tier === 2) return "bg-blue-100 text-blue-700 border-blue-200";
+        if (tier === 3)
+            return "bg-emerald-100 text-emerald-700 border-emerald-200";
+        if (tier === 4) return "bg-amber-100 text-amber-700 border-amber-200";
+        return "bg-gray-100 text-gray-700 border-gray-200";
     }
 </script>
 
@@ -81,9 +85,9 @@
                     <!-- Strength Badge -->
                     <div class="absolute top-0 right-0 p-2">
                         <span
-                            class={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-bl-lg ${getStrengthColor(match.TotalScore)}`}
+                            class={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 border rounded-bl-lg shadow-sm ${getStrengthColor(match.Tier)}`}
                         >
-                            {getStrength(match.TotalScore)}
+                            {getStrength(match.Tier, match.TotalScore)}
                         </span>
                     </div>
 

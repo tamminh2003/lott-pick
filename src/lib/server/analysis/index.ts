@@ -139,6 +139,7 @@ export interface CombinedRanking {
     TripletRank?: number;
     QuadRank?: number;
     TotalScore: number;
+    Tier: number; // 1: P+T+Q, 2: T+Q, 3: Q+P, 4: T+P
 }
 
 /**
@@ -189,7 +190,8 @@ export function calculateCombinedRankings(history: LottoResult[]): CombinedRanki
                             QuadRank: qRank,
                             TripletRank: tRank,
                             PairRank: pRank,
-                            TotalScore: qRank + tRank + pRank
+                            TotalScore: qRank + tRank + pRank,
+                            Tier: 1 // Quad + Triplet + Pair
                         });
                         matchedPairInTri = true;
                     }
@@ -200,14 +202,14 @@ export function calculateCombinedRankings(history: LottoResult[]): CombinedRanki
                         Numbers: qNums,
                         QuadRank: qRank,
                         TripletRank: tRank,
-                        TotalScore: qRank + tRank
+                        TotalScore: qRank + tRank,
+                        Tier: 2 // Quad + Triplet
                     });
                 }
             }
         }
 
         // Check for Pairs within this Quad (that weren't part of a matched Triplet above)
-        // Strictly speaking, if a pair matches, it should be counted even if no triplet matches.
         if (!matchedInQuad) {
             for (let i = 0; i < qNums.length - 1; i++) {
                 for (let j = i + 1; j < qNums.length; j++) {
@@ -218,7 +220,8 @@ export function calculateCombinedRankings(history: LottoResult[]): CombinedRanki
                             Numbers: qNums,
                             QuadRank: qRank,
                             PairRank: pairMap.get(pKey)!,
-                            TotalScore: qRank + pairMap.get(pKey)!
+                            TotalScore: qRank + pairMap.get(pKey)!,
+                            Tier: 3 // Quad + Pair
                         });
                     }
                 }
@@ -232,7 +235,6 @@ export function calculateCombinedRankings(history: LottoResult[]): CombinedRanki
         const tKey = tNums.join(',');
         if (!usedTriplets.has(tKey)) {
             const tRank = tripletMap.get(tKey)!;
-            let matchedPairInTri = false;
 
             for (let i = 0; i < tNums.length; i++) {
                 const pSub = tNums.filter((_, idx) => idx !== i);
@@ -242,14 +244,20 @@ export function calculateCombinedRankings(history: LottoResult[]): CombinedRanki
                         Numbers: tNums,
                         TripletRank: tRank,
                         PairRank: pairMap.get(pKey)!,
-                        TotalScore: tRank + pairMap.get(pKey)!
+                        TotalScore: tRank + pairMap.get(pKey)!,
+                        Tier: 4 // Triplet + Pair
                     });
-                    matchedPairInTri = true;
                 }
             }
         }
     });
 
-    // Sort results by TotalScore (lower is better)
-    return results.sort((a, b) => a.TotalScore - b.TotalScore);
+    // Sort: 1st by Tier (lower is higher priority: 1 > 2 > 3 > 4)
+    // 2nd by TotalScore (lower rank sum is better)
+    return results.sort((a, b) => {
+        if (a.Tier !== b.Tier) {
+            return a.Tier - b.Tier;
+        }
+        return a.TotalScore - b.TotalScore;
+    });
 }
