@@ -65,6 +65,18 @@ export class TheLottScraper implements ScraperInterface {
         console.log(`[TheLott] Retrieved ${cachedResults.length} draws from storage for ${product}.`);
 
         const cachedDrawNumbers = new Set(cachedResults.map(d => d.DrawNumber));
+        const cachedDates = new Set(cachedResults.map(d => {
+            const date = new Date(d.DrawDate);
+            return `${date.getUTCFullYear()}-${date.getUTCMonth()}-${date.getUTCDate()}`;
+        }));
+
+        // Define expected draw days (0=Sunday, 1=Monday, ..., 6=Saturday)
+        const productDrawDays: Record<string, number> = {
+            'TattsLotto': 6, // Saturday
+            'OzLotto': 2,    // Tuesday
+            'Powerball': 4   // Thursday
+        };
+        const expectedDay = productDrawDays[product];
 
         // 2. Determine which months we need to check
         const payloads: { start: Date, end: Date, monthKey: string }[] = [];
@@ -72,18 +84,39 @@ export class TheLottScraper implements ScraperInterface {
 
         for (let year = startYear; year <= endYear; year++) {
             for (let month = 0; month < 12; month++) {
-                const checkDate = new Date(Date.UTC(year, month, 1));
-                if (checkDate > now) continue;
+                const firstDayOfMonth = new Date(Date.UTC(year, month, 1));
+                if (firstDayOfMonth > now) continue;
 
                 const monthKey = `${year}-${month}`;
-                const startDate = new Date(Date.UTC(year, month, 0, 13, 0, 0));
-                const endDate = new Date(Date.UTC(year, month + 1, 0, 12, 59, 59));
+                const startDate = new Date(Date.UTC(year, month, 1, 0, 0, 0));
+                const endDate = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59));
 
-                const hasMonthInCache = cachedResults.some(d =>
-                    d.DrawDate >= startDate && d.DrawDate <= endDate
-                );
+                let needsScrape = false;
 
-                if (!hasMonthInCache) {
+                if (expectedDay !== undefined) {
+                    // Check every expected draw date in this month up to now
+                    const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+                    for (let day = 1; day <= lastDay; day++) {
+                        const dateToCheck = new Date(Date.UTC(year, month, day));
+                        if (dateToCheck > now) break;
+
+                        if (dateToCheck.getUTCDay() === expectedDay) {
+                            const dateKey = `${year}-${month}-${day}`;
+                            if (!cachedDates.has(dateKey)) {
+                                console.log(`[TheLott] Missing expected draw for ${product} on ${dateKey}.`);
+                                needsScrape = true;
+                                break;
+                            }
+                        }
+                    }
+                } else {
+                    // Fallback: check if we have ANY data for this month if draw day unknown
+                    needsScrape = !cachedResults.some(d =>
+                        d.DrawDate >= startDate && d.DrawDate <= endDate
+                    );
+                }
+
+                if (needsScrape) {
                     payloads.push({ start: startDate, end: endDate, monthKey });
                 }
             }
@@ -94,16 +127,16 @@ export class TheLottScraper implements ScraperInterface {
             return cachedResults;
         }
 
-        console.log(`[TheLott] Cache incomplete. Found ${payloads.length} months missing:`, payloads.map(p => p.monthKey).join(', '));
+        console.log(`[TheLott] Cache incomplete. Found ${payloads.length} months with missing data:`, payloads.map(p => p.monthKey).join(', '));
 
         let newDrawsCount = 0;
         const allResults = [...cachedResults];
 
         // 3. Process missing months in batches
-        const concurrency = 10;
+        const concurrency = 5; // Reduced concurrency to be gentler on the API
         for (let i = 0; i < payloads.length; i += concurrency) {
             const chunk = payloads.slice(i, i + concurrency);
-            console.log(`[TheLott] Scraping batch ${Math.floor(i / concurrency) + 1}...`);
+            console.log(`[TheLott] Scraping batch ${Math.floor(i / concurrency) + 1} of ${Math.ceil(payloads.length / concurrency)}...`);
 
             const results = await Promise.all(
                 chunk.map(p => this.fetchResultsRange(p.start, p.end, product, company).catch(err => {
